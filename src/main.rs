@@ -2,6 +2,7 @@ use color::write_color;
 use vec3::Color;
 
 mod color;
+mod ray;
 mod vec3;
 
 fn main() {
