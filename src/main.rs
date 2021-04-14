@@ -5,7 +5,7 @@ use hittable_list::HittableList;
 use ray::Ray;
 use rtweekend::{random_double, INFINITY};
 use sphere::Sphere;
-use vec3::{unit_vector, Color, Point3};
+use vec3::{random_in_unit_sphere, unit_vector, Color, Point3};
 
 mod camera;
 mod color;
@@ -16,11 +16,18 @@ mod rtweekend;
 mod sphere;
 mod vec3;
 
-fn ray_color(r: &Ray, world: &dyn Hittable) -> Color {
+fn ray_color(r: &Ray, world: &dyn Hittable, depth: usize) -> Color {
+    if depth <= 0 {
+        return Color::new(0.0, 0.0, 0.0);
+    }
+
     let (hit, rec) = world.hit(r, 0.0, INFINITY);
 
     if hit {
-        return 0.5 * (rec.unwrap().normal() + Color::new(1.0, 1.0, 1.0));
+        let rec = rec.unwrap();
+        let target = rec.p() + rec.normal() + random_in_unit_sphere();
+
+        return 0.5 * ray_color(&Ray::new(*rec.p(), target - rec.p()), world, depth - 1);
     }
 
     let unit_direction = unit_vector(r.direction());
@@ -36,6 +43,7 @@ fn main() {
     const IMAGE_WIDTH: usize = 400;
     const IMAGE_HEIGHT: usize = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as usize;
     const SAMPLES_PER_PIXEL: usize = 100;
+    const MAX_DEPTH: usize = 50;
 
     // World
 
@@ -62,7 +70,7 @@ fn main() {
                 let v = (j as f64 + random_double()) / (IMAGE_HEIGHT - 1) as f64;
                 let r = camera.get_ray(u, v);
 
-                pixel_color += ray_color(&r, &world);
+                pixel_color += ray_color(&r, &world, MAX_DEPTH);
             }
 
             write_color(&pixel_color, SAMPLES_PER_PIXEL);
