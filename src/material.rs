@@ -5,17 +5,10 @@ use crate::vec3::{
     near_zero, random_in_unit_sphere, random_unit_vector, reflect, refract, unit_vector, Color,
 };
 
-/// FIXME: This could use a better name.
-pub(crate) enum ScatterStatus {
-    Absorbed,
-    Scattered {
-        scattered_ray: Ray,
-        attenuation: Color,
-    },
-}
+pub(crate) type Scatter = (Ray, Color);
 
 pub(crate) trait Material {
-    fn scatter(&self, r_in: &Ray, rec: &HitRecord, scattered: &Ray) -> ScatterStatus;
+    fn scatter(&self, r_in: &Ray, rec: &HitRecord, scattered: &Ray) -> Scatter;
 }
 
 pub(crate) struct Lambertian {
@@ -29,7 +22,7 @@ impl Lambertian {
 }
 
 impl Material for Lambertian {
-    fn scatter(&self, _r_in: &Ray, rec: &HitRecord, _scatteredd: &Ray) -> ScatterStatus {
+    fn scatter(&self, _r_in: &Ray, rec: &HitRecord, _scatteredd: &Ray) -> Scatter {
         let mut scatter_direction = rec.normal() + random_unit_vector();
 
         // Catch degenerate scatter direction
@@ -37,10 +30,7 @@ impl Material for Lambertian {
             scatter_direction = *rec.normal();
         }
 
-        ScatterStatus::Scattered {
-            scattered_ray: Ray::new(*rec.p(), scatter_direction),
-            attenuation: self.albedo,
-        }
+        (Ray::new(*rec.p(), scatter_direction), self.albedo)
     }
 }
 
@@ -59,13 +49,13 @@ impl Metal {
 }
 
 impl Material for Metal {
-    fn scatter(&self, r_in: &Ray, rec: &HitRecord, _scattered: &Ray) -> ScatterStatus {
+    fn scatter(&self, r_in: &Ray, rec: &HitRecord, _scattered: &Ray) -> Scatter {
         let reflected = reflect(&unit_vector(r_in.direction()), rec.normal());
 
-        ScatterStatus::Scattered {
-            scattered_ray: Ray::new(*rec.p(), reflected + self.fuzz * random_in_unit_sphere()),
-            attenuation: self.albedo,
-        }
+        (
+            Ray::new(*rec.p(), reflected + self.fuzz * random_in_unit_sphere()),
+            self.albedo,
+        )
     }
 }
 
@@ -87,7 +77,7 @@ impl Dielectric {
 }
 
 impl Material for Dielectric {
-    fn scatter(&self, r_in: &Ray, rec: &HitRecord, _scattered: &Ray) -> ScatterStatus {
+    fn scatter(&self, r_in: &Ray, rec: &HitRecord, _scattered: &Ray) -> Scatter {
         let attenuation = Color::new(1.0, 1.0, 1.0);
         let refraction_ratio = if *rec.front_face() {
             1.0 / self.ir
@@ -108,9 +98,6 @@ impl Material for Dielectric {
             direction = refract(&unit_direction, rec.normal(), refraction_ratio);
         }
 
-        ScatterStatus::Scattered {
-            scattered_ray: Ray::new(*rec.p(), direction),
-            attenuation,
-        }
+        (Ray::new(*rec.p(), direction), attenuation)
     }
 }

@@ -4,7 +4,7 @@ use camera::Camera;
 use color::write_color;
 use hittable::Hittable;
 use hittable_list::HittableList;
-use material::{Dielectric, Lambertian, Material, Metal, ScatterStatus};
+use material::{Dielectric, Lambertian, Material, Metal};
 use ray::Ray;
 use rtweekend::{random_double, random_double_between, INFINITY};
 use sphere::Sphere;
@@ -30,22 +30,14 @@ fn ray_color(r: &Ray, world: &dyn Hittable, depth: usize) -> Color {
 
     if hit {
         let rec = rec.unwrap();
+        let (scattered_ray, attenuation) = rec.material().scatter(r, &rec, &Ray::default());
+        let r = ray_color(&scattered_ray, world, depth - 1);
 
-        return match rec.material().scatter(r, &rec, &Ray::default()) {
-            ScatterStatus::Absorbed => Color::new(0.0, 0.0, 0.0),
-            ScatterStatus::Scattered {
-                attenuation,
-                scattered_ray,
-            } => {
-                let r = ray_color(&scattered_ray, world, depth - 1);
-
-                Color::new(
-                    r.x * attenuation.x,
-                    r.y * attenuation.y,
-                    r.z * attenuation.z,
-                )
-            }
-        };
+        return Color::new(
+            r.x * attenuation.x,
+            r.y * attenuation.y,
+            r.z * attenuation.z,
+        );
     }
 
     let unit_direction = unit_vector(r.direction());
