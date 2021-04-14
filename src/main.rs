@@ -64,47 +64,19 @@ fn main() {
     const MAX_DEPTH: usize = 50;
 
     // World
+    let r: f64 = (std::f64::consts::FRAC_PI_4).cos();
 
     let mut world = HittableList::new();
 
-    let ground: Rc<dyn Material> = Rc::new(Lambertian::new(Color::new(0.8, 0.8, 0.0)));
-    let center: Rc<dyn Material> = Rc::new(Lambertian::new(Color::new(0.1, 0.2, 0.5)));
-    let left: Rc<dyn Material> = Rc::new(Dielectric::new(1.5));
-    let right: Rc<dyn Material> = Rc::new(Metal::new(Color::new(0.8, 0.6, 0.2), 0.0));
+    let left: Rc<dyn Material> = Rc::new(Lambertian::new(Color::new(0.0, 0.0, 1.0)));
+    let right: Rc<dyn Material> = Rc::new(Lambertian::new(Color::new(1.0, 0.0, 0.0)));
 
-    world.add(Box::new(Sphere::new(
-        Point3::new(0.0, -100.5, -1.0),
-        100.0,
-        ground,
-    )));
-
-    world.add(Box::new(Sphere::new(
-        Point3::new(0.0, 0.0, -1.0),
-        0.5,
-        center,
-    )));
-
-    world.add(Box::new(Sphere::new(
-        Point3::new(-1.0, 0.0, -1.0),
-        0.5,
-        Rc::clone(&left),
-    )));
-
-    world.add(Box::new(Sphere::new(
-        Point3::new(-1.0, 0.0, -1.0),
-        -0.4,
-        left,
-    )));
-
-    world.add(Box::new(Sphere::new(
-        Point3::new(1.0, 0.0, -1.0),
-        0.5,
-        right,
-    )));
+    world.add(Box::new(Sphere::new(Point3::new(-r, 0.0, -1.0), r, left)));
+    world.add(Box::new(Sphere::new(Point3::new(r, 0.0, -1.0), r, right)));
 
     // Camera
 
-    let camera = Camera::new();
+    let camera = Camera::new(90.0, ASPECT_RATIO);
 
     // Render
 
