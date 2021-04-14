@@ -66,3 +66,11 @@ pub(crate) fn near_zero(v: &Vec3) -> bool {
 pub(crate) fn reflect(v: &Vec3, n: &Vec3) -> Vec3 {
     v - 2.0 * v.dot(n) * n
 }
+
+pub(crate) fn refract(uv: &Vec3, n: &Vec3, etai_over_etat: f64) -> Vec3 {
+    let cos_theta = (-uv).dot(n).min(1.0);
+    let r_out_perp = etai_over_etat * (uv + cos_theta * n);
+    let r_out_parallel = -(1.0 - length_squared(&r_out_perp)).abs().sqrt() * n;
+
+    r_out_perp + r_out_parallel
+}

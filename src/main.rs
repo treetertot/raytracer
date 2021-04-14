@@ -4,7 +4,7 @@ use camera::Camera;
 use color::write_color;
 use hittable::Hittable;
 use hittable_list::HittableList;
-use material::{Lambertian, Material, Metal, ScatterStatus};
+use material::{Dielectric, Lambertian, Material, Metal, ScatterStatus};
 use ray::Ray;
 use rtweekend::{random_double, INFINITY};
 use sphere::Sphere;
@@ -33,8 +33,11 @@ fn ray_color(r: &Ray, world: &dyn Hittable, depth: usize) -> Color {
 
         return match rec.material().scatter(r, &rec, &Ray::default()) {
             ScatterStatus::Absorbed => Color::new(0.0, 0.0, 0.0),
-            ScatterStatus::Scattered { attenuation, ray } => {
-                let r = ray_color(&ray, world, depth - 1);
+            ScatterStatus::Scattered {
+                attenuation,
+                scattered_ray,
+            } => {
+                let r = ray_color(&scattered_ray, world, depth - 1);
 
                 Color::new(
                     r.x * attenuation.x,
@@ -65,8 +68,8 @@ fn main() {
     let mut world = HittableList::new();
 
     let ground: Rc<dyn Material> = Rc::new(Lambertian::new(Color::new(0.8, 0.8, 0.0)));
-    let center: Rc<dyn Material> = Rc::new(Lambertian::new(Color::new(0.7, 0.3, 0.3)));
-    let left: Rc<dyn Material> = Rc::new(Metal::new(Color::new(0.8, 0.8, 0.8), 0.3));
+    let center: Rc<dyn Material> = Rc::new(Dielectric::new(1.5));
+    let left: Rc<dyn Material> = Rc::new(Dielectric::new(1.5));
     let right: Rc<dyn Material> = Rc::new(Metal::new(Color::new(0.8, 0.6, 0.2), 1.0));
 
     world.add(Box::new(Sphere::new(

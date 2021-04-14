@@ -1,13 +1,16 @@
 use crate::hittable::HitRecord;
 use crate::ray::Ray;
 use crate::vec3::{
-    near_zero, random_in_unit_sphere, random_unit_vector, reflect, unit_vector, Color,
+    near_zero, random_in_unit_sphere, random_unit_vector, reflect, refract, unit_vector, Color,
 };
 
 /// FIXME: This could use a better name.
 pub(crate) enum ScatterStatus {
     Absorbed,
-    Scattered { attenuation: Color, ray: Ray },
+    Scattered {
+        scattered_ray: Ray,
+        attenuation: Color,
+    },
 }
 
 pub(crate) trait Material {
@@ -34,7 +37,7 @@ impl Material for Lambertian {
         }
 
         ScatterStatus::Scattered {
-            ray: Ray::new(*rec.p(), scatter_direction),
+            scattered_ray: Ray::new(*rec.p(), scatter_direction),
             attenuation: self.albedo,
         }
     }
@@ -59,8 +62,36 @@ impl Material for Metal {
         let reflected = reflect(&unit_vector(r_in.direction()), rec.normal());
 
         ScatterStatus::Scattered {
-            ray: Ray::new(*rec.p(), reflected + self.fuzz * random_in_unit_sphere()),
+            scattered_ray: Ray::new(*rec.p(), reflected + self.fuzz * random_in_unit_sphere()),
             attenuation: self.albedo,
+        }
+    }
+}
+
+pub(crate) struct Dielectric {
+    ir: f64, // Index of refraction
+}
+
+impl Dielectric {
+    pub(crate) fn new(ir: f64) -> Self {
+        Self { ir }
+    }
+}
+
+impl Material for Dielectric {
+    fn scatter(&self, r_in: &Ray, rec: &HitRecord, scattered: &Ray) -> ScatterStatus {
+        let refraction_ratio = if *rec.front_face() {
+            1.0 / self.ir
+        } else {
+            self.ir
+        };
+
+        let unit_direction = unit_vector(r_in.direction());
+        let refracted = refract(&unit_direction, rec.normal(), refraction_ratio);
+
+        ScatterStatus::Scattered {
+            scattered_ray: Ray::new(*rec.p(), refracted),
+            attenuation: Color::new(1.0, 1.0, 1.0),
         }
     }
 }
