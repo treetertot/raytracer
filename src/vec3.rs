@@ -74,3 +74,19 @@ pub(crate) fn refract(uv: &Vec3, n: &Vec3, etai_over_etat: f64) -> Vec3 {
 
     r_out_perp + r_out_parallel
 }
+
+pub(crate) fn random_in_unit_disk() -> Vec3 {
+    loop {
+        let p = Vec3::new(
+            random_double_between(-1.0, 1.0),
+            random_double_between(-1.0, 1.0),
+            0.0,
+        );
+
+        if length_squared(&p) >= 1.0 {
+            continue;
+        }
+
+        return p;
+    }
+}

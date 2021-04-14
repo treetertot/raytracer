@@ -8,7 +8,7 @@ use material::{Dielectric, Lambertian, Metal, ScatterStatus};
 use ray::Ray;
 use rtweekend::{random_double, INFINITY};
 use sphere::Sphere;
-use vec3::{unit_vector, Color, Point3, Vec3};
+use vec3::{length, unit_vector, Color, Point3, Vec3};
 
 mod camera;
 mod color;
@@ -64,6 +64,7 @@ fn main() {
     const MAX_DEPTH: usize = 50;
 
     // World
+
     let mut world = HittableList::new();
 
     let ground = Rc::new(Lambertian::new(Color::new(0.8, 0.8, 0.0)));
@@ -103,12 +104,20 @@ fn main() {
 
     // Camera
 
+    let look_from = Point3::new(3.0, 3.0, 2.0);
+    let look_at = Point3::new(0.0, 0.0, -1.0);
+    let vup = Vec3::new(0.0, 1.0, 0.0);
+    let dist_to_focus = length(&(look_from - look_at));
+    const APERTURE: f64 = 2.0;
+
     let camera = Camera::new(
-        Point3::new(-2.0, 2.0, 1.0),
-        Point3::new(0.0, 0.0, -1.0),
-        Vec3::new(0.0, 1.0, 0.0),
-        90.0,
+        look_from,
+        look_at,
+        vup,
+        20.0,
         ASPECT_RATIO,
+        APERTURE,
+        dist_to_focus,
     );
 
     // Render
