@@ -80,6 +80,7 @@ impl Dielectric {
 
 impl Material for Dielectric {
     fn scatter(&self, r_in: &Ray, rec: &HitRecord, scattered: &Ray) -> ScatterStatus {
+        let attenuation = Color::new(1.0, 1.0, 1.0);
         let refraction_ratio = if *rec.front_face() {
             1.0 / self.ir
         } else {
@@ -87,11 +88,21 @@ impl Material for Dielectric {
         };
 
         let unit_direction = unit_vector(r_in.direction());
-        let refracted = refract(&unit_direction, rec.normal(), refraction_ratio);
+        let cos_theta = (-unit_direction).dot(rec.normal()).min(1.0);
+        let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
+
+        let cannot_refract = refraction_ratio * sin_theta > 1.0;
+        let direction;
+
+        if cannot_refract {
+            direction = reflect(&unit_direction, rec.normal());
+        } else {
+            direction = refract(&unit_direction, rec.normal(), refraction_ratio);
+        }
 
         ScatterStatus::Scattered {
-            scattered_ray: Ray::new(*rec.p(), refracted),
-            attenuation: Color::new(1.0, 1.0, 1.0),
+            scattered_ray: Ray::new(*rec.p(), direction),
+            attenuation,
         }
     }
 }

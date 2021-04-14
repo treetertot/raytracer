@@ -68,9 +68,9 @@ fn main() {
     let mut world = HittableList::new();
 
     let ground: Rc<dyn Material> = Rc::new(Lambertian::new(Color::new(0.8, 0.8, 0.0)));
-    let center: Rc<dyn Material> = Rc::new(Dielectric::new(1.5));
+    let center: Rc<dyn Material> = Rc::new(Lambertian::new(Color::new(0.1, 0.2, 0.5)));
     let left: Rc<dyn Material> = Rc::new(Dielectric::new(1.5));
-    let right: Rc<dyn Material> = Rc::new(Metal::new(Color::new(0.8, 0.6, 0.2), 1.0));
+    let right: Rc<dyn Material> = Rc::new(Metal::new(Color::new(0.8, 0.6, 0.2), 0.0));
 
     world.add(Box::new(Sphere::new(
         Point3::new(0.0, -100.5, -1.0),
