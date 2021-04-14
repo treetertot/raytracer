@@ -21,7 +21,7 @@ fn ray_color(r: &Ray, world: &dyn Hittable, depth: usize) -> Color {
         return Color::new(0.0, 0.0, 0.0);
     }
 
-    let (hit, rec) = world.hit(r, 0.0, INFINITY);
+    let (hit, rec) = world.hit(r, 0.001, INFINITY);
 
     if hit {
         let rec = rec.unwrap();
