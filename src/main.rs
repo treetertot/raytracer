@@ -5,7 +5,7 @@ use hittable_list::HittableList;
 use ray::Ray;
 use rtweekend::{random_double, INFINITY};
 use sphere::Sphere;
-use vec3::{random_unit_vector, unit_vector, Color, Point3};
+use vec3::{random_in_hemisphere, unit_vector, Color, Point3};
 
 mod camera;
 mod color;
@@ -17,6 +17,7 @@ mod sphere;
 mod vec3;
 
 fn ray_color(r: &Ray, world: &dyn Hittable, depth: usize) -> Color {
+    // If we've exceeded the ray bounce limit, no more light is gathered.
     if depth <= 0 {
         return Color::new(0.0, 0.0, 0.0);
     }
@@ -25,7 +26,7 @@ fn ray_color(r: &Ray, world: &dyn Hittable, depth: usize) -> Color {
 
     if hit {
         let rec = rec.unwrap();
-        let target = rec.p() + rec.normal() + random_unit_vector();
+        let target = rec.p() + random_in_hemisphere(rec.normal());
 
         return 0.5 * ray_color(&Ray::new(*rec.p(), target - rec.p()), world, depth - 1);
     }
