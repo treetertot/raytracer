@@ -1,16 +1,20 @@
+use std::rc::Rc;
+
 use camera::Camera;
 use color::write_color;
 use hittable::Hittable;
 use hittable_list::HittableList;
+use material::{Lambertian, Material, Metal, ScatterStatus};
 use ray::Ray;
 use rtweekend::{random_double, INFINITY};
 use sphere::Sphere;
-use vec3::{random_in_hemisphere, unit_vector, Color, Point3};
+use vec3::{unit_vector, Color, Point3};
 
 mod camera;
 mod color;
 mod hittable;
 mod hittable_list;
+mod material;
 mod ray;
 mod rtweekend;
 mod sphere;
@@ -26,9 +30,19 @@ fn ray_color(r: &Ray, world: &dyn Hittable, depth: usize) -> Color {
 
     if hit {
         let rec = rec.unwrap();
-        let target = rec.p() + random_in_hemisphere(rec.normal());
 
-        return 0.5 * ray_color(&Ray::new(*rec.p(), target - rec.p()), world, depth - 1);
+        return match rec.material().scatter(r, &rec, &Ray::default()) {
+            ScatterStatus::Absorbed => Color::new(0.0, 0.0, 0.0),
+            ScatterStatus::Scattered { attenuation, ray } => {
+                let r = ray_color(&ray, world, depth - 1);
+
+                Color::new(
+                    r.x * attenuation.x,
+                    r.y * attenuation.y,
+                    r.z * attenuation.z,
+                )
+            }
+        };
     }
 
     let unit_direction = unit_vector(r.direction());
@@ -49,8 +63,35 @@ fn main() {
     // World
 
     let mut world = HittableList::new();
-    world.add(Box::new(Sphere::new(Point3::new(0.0, 0.0, -1.0), 0.5)));
-    world.add(Box::new(Sphere::new(Point3::new(0.0, -100.5, -1.0), 100.0)));
+
+    let ground: Rc<dyn Material> = Rc::new(Lambertian::new(Color::new(0.8, 0.8, 0.0)));
+    let center: Rc<dyn Material> = Rc::new(Lambertian::new(Color::new(0.7, 0.3, 0.3)));
+    let left: Rc<dyn Material> = Rc::new(Metal::new(Color::new(0.8, 0.8, 0.8)));
+    let right: Rc<dyn Material> = Rc::new(Metal::new(Color::new(0.8, 0.6, 0.2)));
+
+    world.add(Box::new(Sphere::new(
+        Point3::new(0.0, -100.5, -1.0),
+        100.0,
+        ground,
+    )));
+
+    world.add(Box::new(Sphere::new(
+        Point3::new(0.0, 0.0, -1.0),
+        0.5,
+        center,
+    )));
+
+    world.add(Box::new(Sphere::new(
+        Point3::new(-1.0, 0.0, -1.0),
+        0.5,
+        left,
+    )));
+
+    world.add(Box::new(Sphere::new(
+        Point3::new(1.0, 0.0, -1.0),
+        0.5,
+        right,
+    )));
 
     // Camera
 

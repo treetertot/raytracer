@@ -56,3 +56,13 @@ pub(crate) fn random_in_hemisphere(normal: &Vec3) -> Vec3 {
 
     -in_unit_sphere
 }
+
+pub(crate) fn near_zero(v: &Vec3) -> bool {
+    const S: f64 = 1e-8;
+
+    v.x.abs() < S && v.y.abs() < S && v.z.abs() < S
+}
+
+pub(crate) fn reflect(v: &Vec3, n: &Vec3) -> Vec3 {
+    v - 2.0 * v.dot(n) * n
+}
