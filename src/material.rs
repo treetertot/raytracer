@@ -1,6 +1,8 @@
 use crate::hittable::HitRecord;
 use crate::ray::Ray;
-use crate::vec3::{near_zero, random_unit_vector, reflect, unit_vector, Color};
+use crate::vec3::{
+    near_zero, random_in_unit_sphere, random_unit_vector, reflect, unit_vector, Color,
+};
 
 /// FIXME: This could use a better name.
 pub(crate) enum ScatterStatus {
@@ -40,11 +42,15 @@ impl Material for Lambertian {
 
 pub(crate) struct Metal {
     albedo: Color,
+    fuzz: f64,
 }
 
 impl Metal {
-    pub(crate) fn new(albedo: Color) -> Self {
-        Self { albedo }
+    pub(crate) fn new(albedo: Color, fuzz: f64) -> Self {
+        Self {
+            albedo,
+            fuzz: fuzz.min(1.0),
+        }
     }
 }
 
@@ -52,9 +58,9 @@ impl Material for Metal {
     fn scatter(&self, r_in: &Ray, rec: &HitRecord, _scattered: &Ray) -> ScatterStatus {
         let reflected = reflect(&unit_vector(r_in.direction()), rec.normal());
 
-        return ScatterStatus::Scattered {
-            ray: Ray::new(*rec.p(), reflected),
+        ScatterStatus::Scattered {
+            ray: Ray::new(*rec.p(), reflected + self.fuzz * random_in_unit_sphere()),
             attenuation: self.albedo,
-        };
+        }
     }
 }
