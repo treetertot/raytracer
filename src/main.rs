@@ -1,5 +1,7 @@
 use std::rc::Rc;
 
+use indicatif::{ProgressBar, ProgressStyle};
+
 use camera::Camera;
 use color::write_color;
 use hittable::Hittable;
@@ -144,11 +146,13 @@ fn main() {
     );
 
     // Render
+    let pb = ProgressBar::new(IMAGE_HEIGHT as u64);
+    pb.set_style(ProgressStyle::default_bar().template("[{elapsed_precise}] [{wide_bar}] ({eta})"));
 
     println!("P3\n{} {}\n255", IMAGE_WIDTH, IMAGE_HEIGHT);
 
     for j in (0..IMAGE_HEIGHT).rev() {
-        eprint!(".");
+        pb.inc(1);
 
         for i in 0..IMAGE_WIDTH {
             let mut pixel_color = Color::new(0.0, 0.0, 0.0);
