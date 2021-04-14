@@ -1,5 +1,6 @@
 use crate::hittable::HitRecord;
 use crate::ray::Ray;
+use crate::rtweekend::random_double;
 use crate::vec3::{
     near_zero, random_in_unit_sphere, random_unit_vector, reflect, refract, unit_vector, Color,
 };
@@ -76,10 +77,17 @@ impl Dielectric {
     pub(crate) fn new(ir: f64) -> Self {
         Self { ir }
     }
+
+    fn reflectance(cosine: f64, ref_idx: f64) -> f64 {
+        // Use Schlick's approximation for reflectance.
+        let r0 = ((1.0 - ref_idx) / (1.0 + ref_idx)).powf(2.0);
+
+        r0 + (1.0 + r0) * (1.0 - cosine).powf(5.0)
+    }
 }
 
 impl Material for Dielectric {
-    fn scatter(&self, r_in: &Ray, rec: &HitRecord, scattered: &Ray) -> ScatterStatus {
+    fn scatter(&self, r_in: &Ray, rec: &HitRecord, _scattered: &Ray) -> ScatterStatus {
         let attenuation = Color::new(1.0, 1.0, 1.0);
         let refraction_ratio = if *rec.front_face() {
             1.0 / self.ir
@@ -94,7 +102,7 @@ impl Material for Dielectric {
         let cannot_refract = refraction_ratio * sin_theta > 1.0;
         let direction;
 
-        if cannot_refract {
+        if cannot_refract || Self::reflectance(cos_theta, refraction_ratio) > random_double() {
             direction = reflect(&unit_direction, rec.normal());
         } else {
             direction = refract(&unit_direction, rec.normal(), refraction_ratio);
