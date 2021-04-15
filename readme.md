@@ -3,12 +3,16 @@
 This is a straightforward Rust port of the [_Ray Tracing in One Weekend_][rotw]
 raytracer.
 
-# The final render
+# The final cover render
 
-For the final render, my code samples every ray 500 times. It took almost 2.5
-hours to render on my 2018 i7 MacBook Pro. (I'm not sure if that's fast or slow,
-but I'm working to find out.)
+The final cover render, with 500 samples per ray, took almost 2.5 hours to
+render on my 2018 i7 MacBook Pro.
 
 ![](./final/final.png)
+
+The final render as it appears in the source code, with an aspect ratioi of 16:9
+and 50 samples per ray took about 11 minutes to render, which is still slower
+than the original, which took about 7 minutes. It's my goal to make my port
+significantly faster.
 
 [rotw]: https://raytracing.github.io/books/RayTracingInOneWeekend.html
