@@ -10,9 +10,10 @@ render on my 2018 i7 MacBook Pro.
 
 ![](./final/final.png)
 
-The final render as it appears in the source code, with an aspect ratioi of 16:9
-and 50 samples per ray took about 11 minutes to render, which is still slower
-than the original, which took about 7 minutes. It's my goal to make my port
-significantly faster.
+The final render as it appears in the book's source code, with an aspect ratio
+of 16:9 and 50 samples per ray takes about 11 minutes to render.
+
+This is still slower than the C++ version, which takes about 7 minutes to render
+a similar scene. It's my goal to make my port significantly faster.
 
 [rotw]: https://raytracing.github.io/books/RayTracingInOneWeekend.html
