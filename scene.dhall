@@ -18,9 +18,8 @@ let Object
     : Type
     = < Sphere : { center : Point3, radius : Double, material : Material } >
 
-let scene
-    : List Object
-    = [ Object.Sphere
+let scene =
+      [ Object.Sphere
           { center = { x = 0.0, y = -1000.0, z = 0.0 }
           , radius = 1000.0
           , material =
