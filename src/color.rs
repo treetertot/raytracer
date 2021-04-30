@@ -1,7 +1,7 @@
 use crate::rtweekend::clamp;
 use crate::vec3::Color;
 
-pub(crate) fn write_color(pixel_color: &Color, samples_per_pixel: usize) {
+pub(crate) fn clamp_color(pixel_color: &Color, samples_per_pixel: usize) -> (u8, u8, u8) {
     let r = pixel_color.x;
     let g = pixel_color.y;
     let b = pixel_color.z;
@@ -12,10 +12,9 @@ pub(crate) fn write_color(pixel_color: &Color, samples_per_pixel: usize) {
     let g = (scale * g).sqrt();
     let b = (scale * b).sqrt();
 
-    println!(
-        "{} {} {}",
-        (256.0 * clamp(r, 0.0, 0.999)) as usize,
-        (256.0 * clamp(g, 0.0, 0.999)) as usize,
-        (256.0 * clamp(b, 0.0, 0.999)) as usize
-    );
+    (
+        (256.0 * clamp(r, 0.0, 0.999)) as u16 as u8,
+        (256.0 * clamp(g, 0.0, 0.999)) as u16 as u8,
+        (256.0 * clamp(b, 0.0, 0.999)) as u16 as u8,
+    )
 }

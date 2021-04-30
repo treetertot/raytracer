@@ -1,9 +1,10 @@
 use std::rc::Rc;
 
+use image::{ColorType, ImageError};
 use indicatif::{ProgressBar, ProgressStyle};
 
 use camera::Camera;
-use color::write_color;
+use color::clamp_color;
 use hittable::Hittable;
 use hittable_list::HittableList;
 use material::{Dielectric, Lambertian, Material, Metal};
@@ -114,12 +115,12 @@ fn random_scene() -> HittableList {
     world
 }
 
-fn main() {
+fn main() -> Result<(), ImageError> {
     // Image
 
     const ASPECT_RATIO: f64 = 16.0 / 9.0;
-    const IMAGE_WIDTH: usize = 1200;
-    const IMAGE_HEIGHT: usize = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as usize;
+    const IMAGE_WIDTH: u32 = 1200;
+    const IMAGE_HEIGHT: u32 = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as u32;
     const SAMPLES_PER_PIXEL: usize = 50;
     const MAX_DEPTH: usize = 50;
 
@@ -149,7 +150,7 @@ fn main() {
     let pb = ProgressBar::new(IMAGE_HEIGHT as u64);
     pb.set_style(ProgressStyle::default_bar().template("[{elapsed_precise}] [{wide_bar}] ({eta})"));
 
-    println!("P3\n{} {}\n255", IMAGE_WIDTH, IMAGE_HEIGHT);
+    let mut image_data = Vec::with_capacity((IMAGE_WIDTH * IMAGE_HEIGHT * 3) as usize);
 
     for j in (0..IMAGE_HEIGHT).rev() {
         pb.inc(1);
@@ -165,7 +166,21 @@ fn main() {
                 pixel_color += ray_color(&r, &world, MAX_DEPTH);
             }
 
-            write_color(&pixel_color, SAMPLES_PER_PIXEL);
+            let (r, g, b) = clamp_color(&pixel_color, SAMPLES_PER_PIXEL);
+
+            image_data.push(r);
+            image_data.push(g);
+            image_data.push(b);
         }
     }
+
+    image::save_buffer(
+        "image.png",
+        &image_data,
+        IMAGE_WIDTH,
+        IMAGE_HEIGHT,
+        ColorType::Rgb8,
+    )?;
+
+    Ok(())
 }
