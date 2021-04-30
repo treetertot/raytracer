@@ -12,7 +12,3 @@ indicatif = "0.15.0"
 lazy_static = "1.4.0"
 nalgebra = "0.26.1"
 rand = "0.8.3"
-
-[profile.release]
-lto = true
-codegen-units = 1
