@@ -156,15 +156,16 @@ fn main() -> Result<(), ImageError> {
         pb.inc(1);
 
         for i in 0..IMAGE_WIDTH {
-            let mut pixel_color = Color::new(0.0, 0.0, 0.0);
+            let pixel_color = (0..SAMPLES_PER_PIXEL)
+                .map(|_| {
+                    let u = (i as f64 + random_double()) / (IMAGE_WIDTH - 1) as f64;
+                    let v = (j as f64 + random_double()) / (IMAGE_HEIGHT - 1) as f64;
 
-            for _ in 0..SAMPLES_PER_PIXEL {
-                let u = (i as f64 + random_double()) / (IMAGE_WIDTH - 1) as f64;
-                let v = (j as f64 + random_double()) / (IMAGE_HEIGHT - 1) as f64;
-                let r = camera.get_ray(u, v);
-
-                pixel_color += ray_color(&r, &world, MAX_DEPTH);
-            }
+                    camera.get_ray(u, v)
+                })
+                .fold(Color::new(0.0, 0.0, 0.0), |pixel_color, r| {
+                    pixel_color + ray_color(&r, &world, MAX_DEPTH)
+                });
 
             let (r, g, b) = clamp_color(&pixel_color, SAMPLES_PER_PIXEL);
 
