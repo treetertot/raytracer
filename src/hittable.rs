@@ -66,5 +66,5 @@ impl HitRecord {
 }
 
 pub(crate) trait Hittable {
-    fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> (bool, Option<HitRecord>);
+    fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord>;
 }

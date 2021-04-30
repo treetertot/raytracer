@@ -28,24 +28,26 @@ fn ray_color(r: &Ray, world: &dyn Hittable, depth: usize) -> Color {
         return Color::new(0.0, 0.0, 0.0);
     }
 
-    let (hit, rec) = world.hit(r, 0.001, INFINITY);
+    let rec = world.hit(r, 0.001, INFINITY);
 
-    if hit {
-        let rec = rec.unwrap();
-        let (scattered_ray, attenuation) = rec.material().scatter(r, &rec, &Ray::default());
-        let r = ray_color(&scattered_ray, world, depth - 1);
+    return match rec {
+        Some(rec) => {
+            let (scattered_ray, attenuation) = rec.material().scatter(r, &rec, &Ray::default());
+            let r = ray_color(&scattered_ray, world, depth - 1);
 
-        return Color::new(
-            r.x * attenuation.x,
-            r.y * attenuation.y,
-            r.z * attenuation.z,
-        );
-    }
+            Color::new(
+                r.x * attenuation.x,
+                r.y * attenuation.y,
+                r.z * attenuation.z,
+            )
+        }
+        None => {
+            let unit_direction = unit_vector(r.direction());
+            let t = 0.5 * (unit_direction.y + 1.0);
 
-    let unit_direction = unit_vector(r.direction());
-    let t = 0.5 * (unit_direction.y + 1.0);
-
-    (1.0 - t) * Color::new(1.0, 1.0, 1.0) + t * Color::new(0.5, 0.7, 1.0)
+            (1.0 - t) * Color::new(1.0, 1.0, 1.0) + t * Color::new(0.5, 0.7, 1.0)
+        }
+    };
 }
 
 fn random_scene() -> HittableList {
