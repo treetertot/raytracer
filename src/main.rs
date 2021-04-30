@@ -24,7 +24,7 @@ mod vec3;
 
 fn ray_color(r: &Ray, world: &dyn Hittable, depth: usize) -> Color {
     // If we've exceeded the ray bounce limit, no more light is gathered.
-    if depth <= 0 {
+    if depth == 0 {
         return Color::new(0.0, 0.0, 0.0);
     }
 
