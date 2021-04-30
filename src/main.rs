@@ -28,9 +28,7 @@ fn ray_color(r: &Ray, world: &dyn Hittable, depth: usize) -> Color {
         return Color::new(0.0, 0.0, 0.0);
     }
 
-    let rec = world.hit(r, 0.001, INFINITY);
-
-    return match rec {
+    return match world.hit(r, 0.001, INFINITY) {
         Some(rec) => {
             let (scattered_ray, attenuation) = rec.material().scatter(r, &rec, &Ray::default());
             let r = ray_color(&scattered_ray, world, depth - 1);
