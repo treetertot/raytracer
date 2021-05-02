@@ -15,3 +15,7 @@ nalgebra = "0.26.1"
 rand = "0.8.3"
 serde = { version = "1.0.125", features = ["derive"] }
 serde_dhall = "0.10.1"
+
+[profile.release]
+lto = true
+codegen-units = 1
