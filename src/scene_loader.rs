@@ -48,26 +48,18 @@ pub(crate) fn load_scene(path: &str) -> Result<HittableList, serde_dhall::Error>
                 material,
             } => {
                 let center = crate::vec3::Point3::new(center.x, center.y, center.z);
-
-                match material {
-                    Material::Lambertian { albedo } => {
-                        let material =
-                            Lambertian::new(crate::Color::new(albedo.r, albedo.g, albedo.b));
-
-                        world.add(Box::new(Sphere::new(center, radius, Rc::new(material))));
-                    }
-                    Material::Metal { albedo, fuzz } => {
-                        let material =
-                            Metal::new(crate::Color::new(albedo.r, albedo.g, albedo.b), fuzz);
-
-                        world.add(Box::new(Sphere::new(center, radius, Rc::new(material))));
-                    }
-                    Material::Dielectric { ir } => {
-                        let material = Dielectric::new(ir);
-
-                        world.add(Box::new(Sphere::new(center, radius, Rc::new(material))));
-                    }
+                let mat: Rc<dyn crate::material::Material> = match material {
+                    Material::Lambertian { albedo } => Rc::new(Lambertian::new(crate::Color::new(
+                        albedo.r, albedo.g, albedo.b,
+                    ))),
+                    Material::Metal { albedo, fuzz } => Rc::new(Metal::new(
+                        crate::Color::new(albedo.r, albedo.g, albedo.b),
+                        fuzz,
+                    )),
+                    Material::Dielectric { ir } => Rc::new(Dielectric::new(ir)),
                 };
+
+                world.add(Box::new(Sphere::new(center, radius, mat)));
             }
         }
     }
