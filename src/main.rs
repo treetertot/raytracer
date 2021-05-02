@@ -26,10 +26,10 @@ mod vec3;
 #[derive(FromArgs)]
 struct Args {
     /// scene file
-    #[argh(option, short = 'f', default = "\"scene.dhall\".to_string()")]
+    #[argh(option, short = 'f')]
     scene_file: String,
 
-    /// output
+    /// output file
     #[argh(option, short = 'o', default = "\"image.png\".to_string()")]
     output: String,
 
@@ -37,7 +37,7 @@ struct Args {
     #[argh(option, short = 'a', default = "16.0 / 9.0")]
     aspect_ratio: f64,
 
-    /// image width
+    /// output image width
     #[argh(option, short = 'w', default = "1200")]
     image_width: u32,
 
@@ -45,7 +45,7 @@ struct Args {
     #[argh(option, short = 's', default = "10")]
     samples_per_pixel: usize,
 
-    /// max depth
+    /// maximum depth
     #[argh(option, short = 'd', default = "50")]
     max_depth: usize,
 

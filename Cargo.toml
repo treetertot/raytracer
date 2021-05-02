@@ -15,7 +15,7 @@ lazy_static = "1.4.0"
 nalgebra = "0.26.1"
 rand = "0.8.3"
 serde = { version = "1.0.125", features = ["derive"] }
-serde_dhall = "0.10.1"
+serde_yaml = "0.8.17"
 
 [profile.release]
 lto = true

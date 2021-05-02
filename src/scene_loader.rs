@@ -1,5 +1,7 @@
+use std::io::prelude::*;
 use std::rc::Rc;
 
+use color_eyre::eyre::Result;
 use serde::Deserialize;
 
 use crate::hittable_list::HittableList;
@@ -21,6 +23,7 @@ pub(crate) struct Color {
 }
 
 #[derive(Deserialize)]
+#[serde(untagged)]
 pub(crate) enum Material {
     Lambertian { albedo: Color },
     Metal { albedo: Color, fuzz: f64 },
@@ -28,6 +31,7 @@ pub(crate) enum Material {
 }
 
 #[derive(Deserialize)]
+#[serde(untagged)]
 pub(crate) enum Object {
     Sphere {
         center: Point3,
@@ -36,8 +40,16 @@ pub(crate) enum Object {
     },
 }
 
-pub(crate) fn load_scene(path: &str) -> Result<HittableList, serde_dhall::Error> {
-    let scene = serde_dhall::from_file(path).parse::<Vec<Object>>()?;
+pub(crate) fn load_scene(path: &str) -> Result<HittableList> {
+    let mut scene_yml = String::new();
+
+    if path == "-" {
+        std::io::stdin().read_to_string(&mut scene_yml)?;
+    } else {
+        scene_yml = std::fs::read_to_string(path)?;
+    }
+
+    let scene = serde_yaml::from_str::<Vec<Object>>(&scene_yml)?;
     let mut world = HittableList::new();
 
     for object in scene {

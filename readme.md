@@ -9,13 +9,13 @@ It has several features the original lacks:
 
   ```
   -f, --scene-file  scene file
-  -o, --output      output
+  -o, --output      output file
   -a, --aspect-ratio
                     aspect ratio
-  -w, --image-width image width
+  -w, --image-width output image width
   -s, --samples-per-pixel
                     samples per pixel
-  -d, --max-depth   max depth
+  -d, --max-depth   maximum depth
   -D, --focus-distance
                     focus distance
   -A, --aperture    aperture
@@ -25,7 +25,20 @@ It has several features the original lacks:
 - Exporting renders as PNG rather than PPM
 - A pretty progress bar
 - Built around `nalgebra::Vector3<f64>` rather than rolling our own vector code.
-- Rendering arbitrary scenes using scene files (like [`scene.dhall`][scene]).
+- Rendering arbitrary scenes using scene files.
+
+# Writing scene files
+
+Scene file are consumed in YAML. I say "consumed" and not "written" because
+using Dhall is much nicer, and JSON is supported as well (because YAML is a
+superset of JSON).
+
+The program also supports reading a scene file from stdin, meaning we can do
+this:
+
+```
+dhall-to-yaml --file scene.dhall | cargo run --release -- --scene-file - --samples-per-pixel 1
+```
 
 # The cover render
 
