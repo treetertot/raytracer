@@ -33,7 +33,7 @@ The cover render, described in [`scene.dhall`][scene], with
 `-a 1.5 -w 1200 -s 500 -D 10 -A 0.1` (the parameters from the chapter "A Final
 Render" in the book) takes about 52 minutes to render on my 2018 i7 MacBook Pro.
 
-![](./final/final-2.png)
+![](./final/final.png)
 
 The final render _as it appears in the book's source code_, with an aspect ratio
 of 16:9 and 10 samples per ray takes about a minute to render. The original C++
