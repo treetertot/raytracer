@@ -103,23 +103,13 @@ fn main() -> Result<()> {
 
     // World
 
-    const PROGRESS_BAR_TEMPLATE: &'static str =
-        "[{elapsed_precise}] ({eta_precise}) {msg} [{wide_bar}]";
-    const PROGRESS_BAR_TEMPLATE_WITHOUT_MESSAGE: &'static str =
-        "[{elapsed_precise}] ({eta_precise}) [{wide_bar}]";
-
     let pb = ProgressBar::new(image_height as u64);
-    pb.set_style(ProgressStyle::default_bar().template(PROGRESS_BAR_TEMPLATE));
+    pb.set_style(
+        ProgressStyle::default_bar()
+            .template("[{elapsed_precise}] ({eta_precise}) {msg} [{wide_bar}]"),
+    );
 
-    pb.set_message("loading scene");
     let world = load_scene(&args.scene_file)?;
-
-    // You'd think we'd just be able to call pb.set_message(""), but that
-    // leaves a gap where the message is supposed to go.
-    // So, we reinitalize the progress bar with a new template without the
-    // message field.
-
-    pb.set_style(ProgressStyle::default_bar().template(PROGRESS_BAR_TEMPLATE_WITHOUT_MESSAGE));
 
     // Camera
 
