@@ -1,17 +1,14 @@
-use std::rc::Rc;
-
-use image::{ColorType, ImageError};
+use color_eyre::eyre::Result;
+use image::ColorType;
 use indicatif::{ProgressBar, ProgressStyle};
 
 use camera::Camera;
 use color::clamp_color;
 use hittable::Hittable;
-use hittable_list::HittableList;
-use material::{Dielectric, Lambertian, Material, Metal};
 use ray::Ray;
-use rtweekend::{random_double, random_double_between, INFINITY};
-use sphere::Sphere;
-use vec3::{length, random_vector_between, unit_vector, Color, Point3, Vec3};
+use rtweekend::{random_double, INFINITY};
+use scene_loader::load_scene;
+use vec3::{unit_vector, Color, Point3, Vec3};
 
 mod camera;
 mod color;
@@ -20,6 +17,7 @@ mod hittable_list;
 mod material;
 mod ray;
 mod rtweekend;
+mod scene_loader;
 mod sphere;
 mod vec3;
 
@@ -49,73 +47,8 @@ fn ray_color(r: &Ray, world: &dyn Hittable, depth: usize) -> Color {
     };
 }
 
-fn random_scene() -> HittableList {
-    let mut world = HittableList::new();
-
-    let ground = Lambertian::new(Color::new(0.5, 0.5, 0.5));
-    world.add(Box::new(Sphere::new(
-        Point3::new(0.0, -1000.0, 0.0),
-        1000.0,
-        Rc::new(ground),
-    )));
-
-    for a in -11..11 {
-        for b in -11..11 {
-            let choose_mat = random_double();
-            let center = Point3::new(
-                a as f64 + 0.9 * random_double(),
-                0.2,
-                b as f64 + 0.9 * random_double(),
-            );
-
-            if length(&(center - Point3::new(4.0, 0.2, 0.0))) > 0.9 {
-                let sphere_material: Rc<dyn Material>;
-
-                if choose_mat < 0.8 {
-                    let r = random_double();
-                    let albedo = Color::new(
-                        r * random_double(),
-                        r * random_double(),
-                        r * random_double(),
-                    );
-
-                    sphere_material = Rc::new(Lambertian::new(albedo));
-                } else if choose_mat < 0.95 {
-                    let albedo = random_vector_between(0.5, 1.0);
-                    let fuzz = random_double_between(0.0, 0.5);
-
-                    sphere_material = Rc::new(Metal::new(albedo, fuzz));
-                } else {
-                    sphere_material = Rc::new(Dielectric::new(1.5));
-                }
-
-                world.add(Box::new(Sphere::new(center, 0.2, sphere_material)));
-            }
-        }
-    }
-
-    world.add(Box::new(Sphere::new(
-        Point3::new(0.0, 1.0, 0.0),
-        1.0,
-        Rc::new(Dielectric::new(1.5)),
-    )));
-
-    world.add(Box::new(Sphere::new(
-        Point3::new(-4.0, 1.0, 0.0),
-        1.0,
-        Rc::new(Lambertian::new(Color::new(0.4, 0.2, 0.1))),
-    )));
-
-    world.add(Box::new(Sphere::new(
-        Point3::new(4.0, 1.0, 0.0),
-        1.0,
-        Rc::new(Metal::new(Color::new(0.7, 0.6, 0.5), 0.0)),
-    )));
-
-    world
-}
-
-fn main() -> Result<(), ImageError> {
+fn main() -> Result<()> {
+    color_eyre::install()?;
     // Image
 
     const ASPECT_RATIO: f64 = 16.0 / 9.0;
@@ -126,7 +59,23 @@ fn main() -> Result<(), ImageError> {
 
     // World
 
-    let world = random_scene();
+    const PROGRESS_BAR_TEMPLATE: &'static str =
+        "[{elapsed_precise}] ({eta_precise}) {msg} [{wide_bar}]";
+    const PROGRESS_BAR_TEMPLATE_WITHOUT_MESSAGE: &'static str =
+        "[{elapsed_precise}] ({eta_precise}) [{wide_bar}]";
+
+    let pb = ProgressBar::new(IMAGE_HEIGHT as u64);
+    pb.set_style(ProgressStyle::default_bar().template(PROGRESS_BAR_TEMPLATE));
+
+    pb.set_message("loading scene");
+    let world = load_scene("scene.dhall")?;
+
+    // You'd think we'd just be able to call pb.set_message(""), but that
+    // leaves a gap where the message is supposed to go.
+    // So, we reinitalize the progress bar with a new template without the
+    // message field.
+
+    pb.set_style(ProgressStyle::default_bar().template(PROGRESS_BAR_TEMPLATE_WITHOUT_MESSAGE));
 
     // Camera
 
@@ -147,9 +96,6 @@ fn main() -> Result<(), ImageError> {
     );
 
     // Render
-    let pb = ProgressBar::new(IMAGE_HEIGHT as u64);
-    pb.set_style(ProgressStyle::default_bar().template("[{elapsed_precise}] [{wide_bar}] ({eta})"));
-
     let mut image_data = Vec::with_capacity((IMAGE_WIDTH * IMAGE_HEIGHT * 3) as usize);
 
     for j in (0..IMAGE_HEIGHT).rev() {

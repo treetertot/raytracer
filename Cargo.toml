@@ -7,8 +7,11 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+color-eyre = "0.5.11"
 image = "0.23.14"
 indicatif = "0.15.0"
 lazy_static = "1.4.0"
 nalgebra = "0.26.1"
 rand = "0.8.3"
+serde = { version = "1.0.125", features = ["derive"] }
+serde_dhall = "0.10.1"
