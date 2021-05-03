@@ -6,6 +6,7 @@ use serde::Deserialize;
 
 use crate::hittable_list::HittableList;
 use crate::material::{Dielectric, Lambertian, Metal};
+use crate::moving_sphere::MovingSphere;
 use crate::sphere::Sphere;
 
 #[derive(Deserialize)]
@@ -31,6 +32,26 @@ pub(crate) enum Material {
 }
 
 #[derive(Deserialize)]
+pub(crate) struct StartEndPair<T> {
+    start: T,
+    end: T,
+}
+
+impl<T> StartEndPair<T> {
+    pub(crate) fn new(start: T, end: T) -> Self {
+        Self { start, end }
+    }
+
+    pub(crate) fn start(&self) -> &T {
+        &self.start
+    }
+
+    pub(crate) fn end(&self) -> &T {
+        &self.end
+    }
+}
+
+#[derive(Deserialize)]
 #[serde(untagged)]
 pub(crate) enum Object {
     Sphere {
@@ -38,12 +59,33 @@ pub(crate) enum Object {
         radius: f64,
         material: Material,
     },
+    MovingSphere {
+        center: StartEndPair<Point3>,
+        time: StartEndPair<f64>,
+        radius: f64,
+        material: Material,
+    },
+}
+
+fn make_material(material: Material) -> Rc<dyn crate::material::Material> {
+    match material {
+        Material::Lambertian { albedo } => Rc::new(Lambertian::new(crate::Color::new(
+            albedo.r, albedo.g, albedo.b,
+        ))),
+        Material::Metal { albedo, fuzz } => Rc::new(Metal::new(
+            crate::Color::new(albedo.r, albedo.g, albedo.b),
+            fuzz,
+        )),
+        Material::Dielectric { ir } => Rc::new(Dielectric::new(ir)),
+    }
 }
 
 pub(crate) fn load_scene(path: &str) -> Result<HittableList> {
-    let mut scene_yml = String::new();
+    let mut scene_yml;
 
     if path == "-" {
+        scene_yml = String::new();
+
         std::io::stdin().read_to_string(&mut scene_yml)?;
     } else {
         scene_yml = std::fs::read_to_string(path)?;
@@ -60,18 +102,23 @@ pub(crate) fn load_scene(path: &str) -> Result<HittableList> {
                 material,
             } => {
                 let center = crate::vec3::Point3::new(center.x, center.y, center.z);
-                let mat: Rc<dyn crate::material::Material> = match material {
-                    Material::Lambertian { albedo } => Rc::new(Lambertian::new(crate::Color::new(
-                        albedo.r, albedo.g, albedo.b,
-                    ))),
-                    Material::Metal { albedo, fuzz } => Rc::new(Metal::new(
-                        crate::Color::new(albedo.r, albedo.g, albedo.b),
-                        fuzz,
-                    )),
-                    Material::Dielectric { ir } => Rc::new(Dielectric::new(ir)),
+                let material = make_material(material);
+
+                world.add(Box::new(Sphere::new(center, radius, material)));
+            }
+            Object::MovingSphere {
+                center,
+                radius,
+                material,
+                time,
+            } => {
+                let material = make_material(material);
+                let center = StartEndPair {
+                    start: crate::vec3::Point3::new(center.start.x, center.start.y, center.start.z),
+                    end: crate::vec3::Point3::new(center.end.x, center.end.y, center.end.z),
                 };
 
-                world.add(Box::new(Sphere::new(center, radius, mat)));
+                world.add(Box::new(MovingSphere::new(center, time, radius, material)));
             }
         }
     }

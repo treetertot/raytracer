@@ -8,7 +8,7 @@ use color::clamp_color;
 use hittable::Hittable;
 use ray::Ray;
 use rtweekend::{random_double, INFINITY};
-use scene_loader::load_scene;
+use scene_loader::{load_scene, StartEndPair};
 use vec3::{unit_vector, Color, Point3, Vec3};
 
 mod camera;
@@ -16,6 +16,7 @@ mod color;
 mod hittable;
 mod hittable_list;
 mod material;
+mod moving_sphere;
 mod ray;
 mod rtweekend;
 mod scene_loader;
@@ -70,14 +71,19 @@ fn ray_color(r: &Ray, world: &dyn Hittable, depth: usize) -> Color {
 
     return match world.hit(r, 0.001, INFINITY) {
         Some(rec) => {
-            let (scattered_ray, attenuation) = rec.material().scatter(r, &rec, &Ray::default());
-            let r = ray_color(&scattered_ray, world, depth - 1);
+            if let Some((scattered_ray, attenuation)) =
+                rec.material().scatter(r, &rec, &Ray::default())
+            {
+                let r = ray_color(&scattered_ray, world, depth - 1);
 
-            Color::new(
-                r.x * attenuation.x,
-                r.y * attenuation.y,
-                r.z * attenuation.z,
-            )
+                Color::new(
+                    r.x * attenuation.x,
+                    r.y * attenuation.y,
+                    r.z * attenuation.z,
+                )
+            } else {
+                Color::new(0.0, 0.0, 0.0)
+            }
         }
         None => {
             let unit_direction = unit_vector(r.direction());
@@ -127,6 +133,7 @@ fn main() -> Result<()> {
         aspect_ratio,
         aperture,
         dist_to_focus,
+        StartEndPair::new(0.0, 1.0),
     );
 
     // Render

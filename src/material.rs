@@ -5,7 +5,7 @@ use crate::vec3::{
     near_zero, random_in_unit_sphere, random_unit_vector, reflect, refract, unit_vector, Color,
 };
 
-pub(crate) type Scatter = (Ray, Color);
+pub(crate) type Scatter = Option<(Ray, Color)>;
 
 pub(crate) trait Material {
     fn scatter(&self, r_in: &Ray, rec: &HitRecord, scattered: &Ray) -> Scatter;
@@ -22,7 +22,7 @@ impl Lambertian {
 }
 
 impl Material for Lambertian {
-    fn scatter(&self, _r_in: &Ray, rec: &HitRecord, _scatteredd: &Ray) -> Scatter {
+    fn scatter(&self, r_in: &Ray, rec: &HitRecord, _scatteredd: &Ray) -> Scatter {
         let mut scatter_direction = rec.normal() + random_unit_vector();
 
         // Catch degenerate scatter direction
@@ -30,7 +30,10 @@ impl Material for Lambertian {
             scatter_direction = *rec.normal();
         }
 
-        (Ray::new(*rec.p(), scatter_direction), self.albedo)
+        Some((
+            Ray::new(*rec.p(), scatter_direction, Some(r_in.time())),
+            self.albedo,
+        ))
     }
 }
 
@@ -52,10 +55,18 @@ impl Material for Metal {
     fn scatter(&self, r_in: &Ray, rec: &HitRecord, _scattered: &Ray) -> Scatter {
         let reflected = reflect(&unit_vector(r_in.direction()), rec.normal());
 
-        (
-            Ray::new(*rec.p(), reflected + self.fuzz * random_in_unit_sphere()),
-            self.albedo,
-        )
+        if _scattered.direction().dot(rec.normal()) > 0.0 {
+            return Some((
+                Ray::new(
+                    *rec.p(),
+                    reflected + self.fuzz * random_in_unit_sphere(),
+                    Some(r_in.time()),
+                ),
+                self.albedo,
+            ));
+        }
+
+        None
     }
 }
 
@@ -98,6 +109,9 @@ impl Material for Dielectric {
             direction = refract(&unit_direction, rec.normal(), refraction_ratio);
         }
 
-        (Ray::new(*rec.p(), direction), attenuation)
+        Some((
+            Ray::new(*rec.p(), direction, Some(r_in.time())),
+            attenuation,
+        ))
     }
 }

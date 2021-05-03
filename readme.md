@@ -29,20 +29,12 @@ It has several features the original lacks:
 
 # Writing scene files
 
-Scene file are consumed in YAML. I say "consumed" and not "written" because
-using Dhall is much nicer, and JSON is supported as well (because YAML is a
+Scene file are consumed in YAML. JSON is supported as well (because YAML is a
 superset of JSON).
-
-The program also supports reading a scene file from stdin, meaning we can do
-this:
-
-```
-dhall-to-yaml --file scene.dhall | cargo run --release -- --scene-file - --samples-per-pixel 1
-```
 
 # The cover render
 
-The cover render, described in [`scene.dhall`][scene], with
+The cover render, described in [`scene.yml`][scene], with
 `-a 1.5 -w 1200 -s 500 -D 10 -A 0.1` (the parameters from the chapter "A Final
 Render" in the book) takes about 52 minutes to render on my 2018 i7 MacBook Pro.
 
@@ -53,4 +45,4 @@ of 16:9 and 10 samples per ray takes about a minute to render. The original C++
 version takes about 7 minutes to render a similar scene.
 
 [rotw]: https://raytracing.github.io/books/RayTracingInOneWeekend.html
-[scene]: ./scene.dhall
+[scene]: ./scene.yml
