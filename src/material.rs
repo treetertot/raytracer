@@ -7,10 +7,11 @@ use crate::vec3::{
 
 pub(crate) type Scatter = Option<(Ray, Color)>;
 
-pub(crate) trait Material {
+pub(crate) trait Material: std::fmt::Debug {
     fn scatter(&self, r_in: &Ray, rec: &HitRecord, scattered: &Ray) -> Scatter;
 }
 
+#[derive(Debug)]
 pub(crate) struct Lambertian {
     albedo: Color,
 }
@@ -37,6 +38,7 @@ impl Material for Lambertian {
     }
 }
 
+#[derive(Debug)]
 pub(crate) struct Metal {
     albedo: Color,
     fuzz: f64,
@@ -52,24 +54,29 @@ impl Metal {
 }
 
 impl Material for Metal {
-    fn scatter(&self, r_in: &Ray, rec: &HitRecord, _scattered: &Ray) -> Scatter {
+    fn scatter(&self, r_in: &Ray, rec: &HitRecord, _scatter: &Ray) -> Scatter {
         let reflected = reflect(&unit_vector(r_in.direction()), rec.normal());
 
-        if _scattered.direction().dot(rec.normal()) > 0.0 {
-            return Some((
-                Ray::new(
-                    *rec.p(),
-                    reflected + self.fuzz * random_in_unit_sphere(),
-                    Some(r_in.time()),
-                ),
-                self.albedo,
-            ));
-        }
+        // The book has this surrounded by something like:
+        //
+        //     if scatter.direction().dot(rec.normal()) > 0.0 {
+        //
+        // but for some reason, that makes my metal spheres appear black.
+        //
+        // Everything *seems* to work fine without it.
 
-        None
+        return Some((
+            Ray::new(
+                *rec.p(),
+                reflected + self.fuzz * random_in_unit_sphere(),
+                Some(r_in.time()),
+            ),
+            self.albedo,
+        ));
     }
 }
 
+#[derive(Debug)]
 pub(crate) struct Dielectric {
     ir: f64, // Index of refraction
 }

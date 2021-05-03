@@ -6,6 +6,7 @@ use crate::ray::Ray;
 use crate::scene_loader::StartEndPair;
 use crate::vec3::{length_squared, Point3};
 
+#[derive(Debug)]
 pub(crate) struct MovingSphere {
     center: StartEndPair<Point3>,
     time: StartEndPair<f64>,

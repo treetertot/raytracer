@@ -26,12 +26,12 @@ pub(crate) struct Color {
 #[derive(Deserialize)]
 #[serde(untagged)]
 pub(crate) enum Material {
-    Lambertian { albedo: Color },
     Metal { albedo: Color, fuzz: f64 },
+    Lambertian { albedo: Color },
     Dielectric { ir: f64 },
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 pub(crate) struct StartEndPair<T> {
     start: T,
     end: T,

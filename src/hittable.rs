@@ -65,6 +65,6 @@ impl HitRecord {
     }
 }
 
-pub(crate) trait Hittable {
+pub(crate) trait Hittable: std::fmt::Debug {
     fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord>;
 }

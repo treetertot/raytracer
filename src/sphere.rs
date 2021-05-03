@@ -5,6 +5,7 @@ use crate::material::Material;
 use crate::ray::Ray;
 use crate::vec3::{length_squared, Point3};
 
+#[derive(Debug)]
 pub(crate) struct Sphere {
     center: Point3,
     radius: f64,
