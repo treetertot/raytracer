@@ -1,19 +1,19 @@
-use std::rc::Rc;
-
 use crate::material::Material;
 use crate::ray::Ray;
 use crate::vec3::{Point3, Vec3};
+use crate::scene_loader::StartEndPair;
+use crate::sphere::hit_sphere;
+use crate::moving_sphere::hit_moving_sphere;
 
 pub(crate) struct HitRecord {
     p: Point3,
     normal: Vec3,
-    material: Rc<dyn Material>,
+    material: Material,
     t: f64,
     front_face: bool,
 }
-
 impl HitRecord {
-    pub(crate) fn new(p: Point3, normal: Vec3, material: Rc<dyn Material>, t: f64) -> Self {
+    pub(crate) fn new(p: Point3, normal: Vec3, material: Material, t: f64) -> Self {
         Self {
             p,
             normal,
@@ -31,7 +31,7 @@ impl HitRecord {
         &self.normal
     }
 
-    pub(crate) fn material(&self) -> &Rc<dyn Material> {
+    pub(crate) fn material(&self) -> &Material {
         &self.material
     }
 
@@ -65,6 +65,28 @@ impl HitRecord {
     }
 }
 
-pub(crate) trait Hittable: std::fmt::Debug {
-    fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord>;
+// Another option would to make the variants into tuples containing the structs
+// It would be possible to have them each in their own module
+// Also the functions here would take fewer args
+#[derive(Debug)]
+pub(crate) enum Hittable {
+    MovingSphere {
+        center: StartEndPair<Point3>,
+        time: StartEndPair<f64>,
+        radius: f64,
+        material: Material,
+    },
+    Sphere {
+        center: Point3,
+        radius: f64,
+        material: Material,
+    }
+}
+impl Hittable {
+    pub(crate) fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
+        match self {
+            Hittable::Sphere{center, radius, material} => hit_sphere(center, *radius, material, r, t_min, t_max),
+            Hittable::MovingSphere{center, time, radius, material} => hit_moving_sphere(center, time, *radius, material, r, t_min, t_max)
+        }
+    }
 }

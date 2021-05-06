@@ -618,6 +618,7 @@ dependencies = [
  "lazy_static",
  "nalgebra",
  "rand",
+ "rayon",
  "serde",
  "serde_yaml",
 ]

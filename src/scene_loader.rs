@@ -1,13 +1,10 @@
 use std::io::prelude::*;
-use std::rc::Rc;
 
 use color_eyre::eyre::Result;
 use serde::Deserialize;
 
-use crate::hittable_list::HittableList;
-use crate::material::{Dielectric, Lambertian, Metal};
-use crate::moving_sphere::MovingSphere;
-use crate::sphere::Sphere;
+use crate::hittable_list::HitList;
+use crate::hittable::Hittable;
 
 #[derive(Deserialize)]
 pub(crate) struct Point3 {
@@ -18,9 +15,9 @@ pub(crate) struct Point3 {
 
 #[derive(Deserialize)]
 pub(crate) struct Color {
-    r: f64,
-    g: f64,
-    b: f64,
+    pub r: f64,
+    pub g: f64,
+    pub b: f64,
 }
 
 #[derive(Deserialize)]
@@ -67,20 +64,7 @@ pub(crate) enum Object {
     },
 }
 
-fn make_material(material: Material) -> Rc<dyn crate::material::Material> {
-    match material {
-        Material::Lambertian { albedo } => Rc::new(Lambertian::new(crate::Color::new(
-            albedo.r, albedo.g, albedo.b,
-        ))),
-        Material::Metal { albedo, fuzz } => Rc::new(Metal::new(
-            crate::Color::new(albedo.r, albedo.g, albedo.b),
-            fuzz,
-        )),
-        Material::Dielectric { ir } => Rc::new(Dielectric::new(ir)),
-    }
-}
-
-pub(crate) fn load_scene(path: &str) -> Result<HittableList> {
+pub(crate) fn load_scene(path: &str) -> Result<HitList> {
     let mut scene_yml;
 
     if path == "-" {
@@ -92,7 +76,7 @@ pub(crate) fn load_scene(path: &str) -> Result<HittableList> {
     }
 
     let scene = serde_yaml::from_str::<Vec<Object>>(&scene_yml)?;
-    let mut world = HittableList::new();
+    let mut world = HitList::new();
 
     for object in scene {
         match object {
@@ -102,9 +86,12 @@ pub(crate) fn load_scene(path: &str) -> Result<HittableList> {
                 material,
             } => {
                 let center = crate::vec3::Point3::new(center.x, center.y, center.z);
-                let material = make_material(material);
 
-                world.add(Box::new(Sphere::new(center, radius, material)));
+                world.add(Hittable::Sphere {
+                    center,
+                    material: material.into(),
+                    radius
+                });
             }
             Object::MovingSphere {
                 center,
@@ -112,13 +99,18 @@ pub(crate) fn load_scene(path: &str) -> Result<HittableList> {
                 material,
                 time,
             } => {
-                let material = make_material(material);
+                let material = material.into();
                 let center = StartEndPair {
                     start: crate::vec3::Point3::new(center.start.x, center.start.y, center.start.z),
                     end: crate::vec3::Point3::new(center.end.x, center.end.y, center.end.z),
                 };
 
-                world.add(Box::new(MovingSphere::new(center, time, radius, material)));
+                world.add(Hittable::MovingSphere {
+                    center,
+                    time,
+                    radius,
+                    material
+                });
             }
         }
     }

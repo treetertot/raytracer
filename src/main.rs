@@ -2,13 +2,14 @@ use argh::FromArgs;
 use color_eyre::eyre::Result;
 use image::ColorType;
 use indicatif::{ProgressBar, ProgressStyle};
+use rayon::prelude::*;
 
 use camera::Camera;
 use color::clamp_color;
-use hittable::Hittable;
+use hittable_list::HitList;
 use ray::Ray;
 use rtweekend::{random_double, INFINITY};
-use scene_loader::{load_scene, StartEndPair};
+use scene_loader::{StartEndPair, load_scene};
 use vec3::{unit_vector, Color, Point3, Vec3};
 
 mod camera;
@@ -63,7 +64,7 @@ struct Args {
     vfov: f64,
 }
 
-fn ray_color(r: &Ray, world: &dyn Hittable, depth: usize) -> Color {
+fn ray_color(r: &Ray, world: &HitList, depth: usize) -> Color {
     // If we've exceeded the ray bounce limit, no more light is gathered.
     if depth == 0 {
         return Color::new(0.0, 0.0, 0.0);
@@ -137,30 +138,36 @@ fn main() -> Result<()> {
     );
 
     // Render
-    let mut image_data = Vec::with_capacity((image_width * image_height * 3) as usize);
 
-    for j in (0..image_height).rev() {
-        pb.inc(1);
+    let mut buffer = vec![[0u8; 3]; (image_width * image_height) as usize];
+    buffer.par_chunks_mut(image_width as usize)
+        .zip((0..image_height).into_par_iter().rev())
+        .for_each(|(row, j)| {
+            pb.inc(1);
 
-        for i in 0..image_width {
-            let pixel_color = (0..samples_per_pixel)
-                .map(|_| {
-                    let u = (i as f64 + random_double()) / (image_width - 1) as f64;
-                    let v = (j as f64 + random_double()) / (image_height - 1) as f64;
+            for (i, oput) in row.iter_mut().enumerate() {
+                let pixel_color: Color = (0..samples_per_pixel)
+                    .map(|_| {
+                        let u = (i as f64 + random_double()) / (image_width - 1) as f64;
+                        let v = (j as f64 + random_double()) / (image_height - 1) as f64;
 
-                    camera.get_ray(u, v)
-                })
-                .fold(Color::new(0.0, 0.0, 0.0), |pixel_color, r| {
-                    pixel_color + ray_color(&r, &world, max_depth)
-                });
-
-            let (r, g, b) = clamp_color(&pixel_color, samples_per_pixel);
-
-            image_data.push(r);
-            image_data.push(g);
-            image_data.push(b);
+                        let r = camera.get_ray(u, v);
+                        ray_color(&r, &world, max_depth)
+                    })
+                    .sum();
+                let (r, g, b) = clamp_color(&pixel_color, samples_per_pixel);
+                *oput = [r, g, b];
+            }
+        });
+    let image_data: Vec<u8> = {
+        let mut buf = Vec::with_capacity(buffer.len() * 3);
+        for color in buffer {
+            buf.push(color[0]);
+            buf.push(color[1]);
+            buf.push(color[2]);
         }
-    }
+        buf
+    };
 
     image::save_buffer(
         args.output,
